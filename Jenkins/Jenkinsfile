@@ -1,0 +1,66 @@
+pipeline {
+    agent {
+        label 'devops'
+    }
+    
+    environment  {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+    stages {
+        stage('Cleaning Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                git url:'https://github.com/kailash-Prajapati/test.git', branch:'main'
+            }
+        }
+        stage('Sonarqube Analysis ') {
+            steps {
+                dir('src/') {
+                    withSonarQubeEnv('sonar-scanner') {
+                        sh ''' $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=test \
+                        -Dsonar.projectKey=test '''
+                    }
+                }
+            }
+        }
+        stage('QualityGate') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonartoken' 
+                }
+            }
+        }
+        stage('OWASP Scan') {
+            steps {
+                dir('src/') {
+                    dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+            }
+        }
+        stage('TrivyFScan') {
+            steps {
+                dir('src/') {
+                    sh 'trivy fs . > trivyfs.txt'
+                }
+            }
+        }
+        stage("Image Create") {
+            steps {
+                script{
+                    sh ' docker build -t phpweb .'
+                }
+            }
+        }
+        // stage("BuildContainer"){
+        //     steps {
+        //         sh 'docker run -dit --name web -p 80:80 dockerci:latest '
+        //     }
+        // }
+    }
+}
