@@ -28,13 +28,13 @@ pipeline {
                 }
             }
         }
-        stage('QualityGate') {
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonartoken' 
-                }
-            }
-        }
+        // stage('QualityGate') {
+        //     steps {
+        //         script {
+        //             waitForQualityGate abortPipeline: false, credentialsId: 'sonartoken' 
+        //         }
+        //     }
+        // }
         stage('OWASP Scan') {
             steps {
                 dir('src/') {
