@@ -53,7 +53,7 @@ pipeline {
         stage("Image Create") {
             steps {
                 script{
-                    sh ' docker build -t phpweb .'
+                    sh ' docker build -t web .'
                 }
             }
         }
